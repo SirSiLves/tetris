@@ -27,7 +27,20 @@ export class RotateService {
       [0, 0, 0, 0]
     ];
 
+    // i = 12 + y - (x * 4)
     console.log(this.getRotateValue(1, nextTetromino.y, nextTetromino.x));
+    console.table(testShape2);
+
+    //https://www.youtube.com/watch?v=8OK8_tHeCIA&t=387s
+
+    testShape1.forEach((row, y) => {
+      row.forEach((value, x) => {
+
+
+
+      });
+    });
+
 
   }
 
