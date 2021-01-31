@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild} from '@angular/core';
 import {RotateService} from "../services/rotate.service";
 import {TetrominoService} from "../services/tetromino.service";
 import {TetrominoInterface} from "../entity/tetromino.interface";
@@ -12,16 +12,17 @@ export class GameComponent implements OnInit, AfterViewInit {
 
   @ViewChild('canvasBoard') public canvas: ElementRef;
 
-  private WIDTH: number = 10;
-  private HEIGHT: number = 15;
-  private BLOCK: number = 50;
-  private SLEEP: number = 100;
+  private WIDTH = 10;
+  private HEIGHT = 15;
+  private BLOCK = 50;
+  private SLEEP = 100;
 
   private ctx: CanvasRenderingContext2D;
   private matrix: number[][];
   private isRunning: boolean;
   private fps: number;
   private nextTetromino: TetrominoInterface;
+  private isGameOver: boolean;
 
   constructor(
     private rotateService: RotateService,
@@ -33,10 +34,12 @@ export class GameComponent implements OnInit, AfterViewInit {
     this.matrix = Array.from({length: this.HEIGHT},
       () => new Array(this.WIDTH).fill(0));
 
-    //TODO initialize
-    this.matrix[0][0] = 2
-    this.matrix[8][5] = 4
-    this.matrix[this.HEIGHT - 1][this.WIDTH - 1] = 7
+    this.isGameOver = false;
+
+    // TODO initialize
+    this.matrix[0][0] = 2;
+    this.matrix[8][5] = 4;
+    this.matrix[this.HEIGHT - 1][this.WIDTH - 1] = 7;
   }
 
   public ngAfterViewInit(): void {
@@ -54,13 +57,13 @@ export class GameComponent implements OnInit, AfterViewInit {
   private render(): void {
     if (this.isRunning) {
 
-      if (!this.fps || this.fps > this.SLEEP || this.fps == 0) {
+      if (!this.fps || this.fps > this.SLEEP || this.fps === 0) {
         this.clear();
         this.handleTetromino();
         this.drawBoard();
         this.fps = 0;
 
-        console.table(this.matrix);
+        // console.table(this.matrix);
       }
       requestAnimationFrame(this.render.bind(this));
 
@@ -71,21 +74,20 @@ export class GameComponent implements OnInit, AfterViewInit {
   private handleTetromino(): void {
     if (!this.nextTetromino || this.tetrominoService.hasCollided(this.matrix, this.nextTetromino)) {
       this.nextTetromino = this.tetrominoService.generateTetromino();
-    }
-    else {
-      //reset tetromino in matrix
+    } else {
+      // reset tetromino in matrix
       this.tetrominoService.refreshMatrix(this.matrix, this.nextTetromino, true);
 
-      //force tetromino down
+      // force tetromino down
       this.nextTetromino.y += 1;
     }
 
-    //set current tetromino to matrix
+    // set current tetromino to matrix
     this.tetrominoService.refreshMatrix(this.matrix, this.nextTetromino, false);
   }
 
   private drawBoard(): void {
-    //retrieve value from matrix and draw rectangle in mapped color
+    // retrieve value from matrix and draw rectangle in mapped color
     this.matrix.forEach((row, y) => {
       row.forEach((value, x) => {
         this.ctx.fillStyle = this.tetrominoService.getColor(value);
@@ -105,5 +107,14 @@ export class GameComponent implements OnInit, AfterViewInit {
 
   clear(): void {
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  private keyEvent(event: KeyboardEvent): void {
+    if (this.isRunning && event.key === 'ArrowUp') {
+      this.rotateService.rotate(this.nextTetromino, event);
+      this.tetrominoService.refreshMatrix(this.matrix, this.nextTetromino, false);
+    }
+
   }
 }

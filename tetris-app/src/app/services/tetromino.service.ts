@@ -27,9 +27,10 @@ export class TetrominoService {
       type: 6,
       color: this.COLOR_TABLE[6],
       shape: [
-        [6, 0, 0],
-        [6, 6, 6],
-        [0, 0, 0]
+        [6, 0, 0, 0],
+        [6, 6, 6, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0]
       ]
     };
   }
@@ -38,13 +39,13 @@ export class TetrominoService {
     return this.COLOR_TABLE[x];
   }
 
-  refreshMatrix(matrix: number[][], nextTetromino: TetrominoInterface, isClean: boolean): void {
+  refreshMatrix(matrix: number[][], nextTetromino: TetrominoInterface, cleanUp: boolean): void {
     nextTetromino.shape.forEach((tRow, tY) => {
       tRow.forEach((tValue, tX) => {
         if (tValue !== 0) {
-          matrix[nextTetromino.y + tY][nextTetromino.x + tX] = isClean ? 0 : nextTetromino.type;
+          matrix[nextTetromino.y + tY][nextTetromino.x + tX] = cleanUp ? 0 : nextTetromino.type;
         }
-      })
+      });
     });
   }
 
