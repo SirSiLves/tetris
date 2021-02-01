@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {TetrominoInterface} from "../entity/tetromino.interface";
+import {TetrominoInterface} from '../entity/tetromino.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -22,15 +22,15 @@ export class TetrominoService {
 
   generateTetromino(): TetrominoInterface {
     return {
-      x: 5,
+      x: 3,
       y: 0,
       type: 6,
       color: this.COLOR_TABLE[6],
       shape: [
-        [0, 0, 0, 0],
         [0, 6, 6, 0],
         [0, 6, 0, 0],
-        [0, 6, 0, 0]
+        [0, 6, 0, 0],
+        [0, 0, 0, 0]
       ]
     };
   }
@@ -39,11 +39,11 @@ export class TetrominoService {
     return this.COLOR_TABLE[x];
   }
 
-  refreshMatrix(matrix: number[][], nextTetromino: TetrominoInterface, cleanUp: boolean): void {
+  updateMatrix(matrix: number[][], nextTetromino: TetrominoInterface, remove: boolean): void {
     nextTetromino.shape.forEach((tRow, tY) => {
       tRow.forEach((tValue, tX) => {
         if (tValue !== 0) {
-          matrix[nextTetromino.y + tY][nextTetromino.x + tX] = cleanUp ? 0 : nextTetromino.type;
+          matrix[nextTetromino.y + tY][nextTetromino.x + tX] = remove ? 0 : nextTetromino.type;
         }
       });
     });

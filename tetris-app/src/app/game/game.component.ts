@@ -1,8 +1,18 @@
-import {AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild} from '@angular/core';
-import {RotateService} from "../services/rotate.service";
-import {TetrominoService} from "../services/tetromino.service";
-import {TetrominoInterface} from "../entity/tetromino.interface";
-
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  ViewChild
+} from '@angular/core';
+import {RotateService} from '../services/rotate.service';
+import {TetrominoService} from '../services/tetromino.service';
+import {TetrominoInterface} from '../entity/tetromino.interface';
+import {Subject} from 'rxjs';
+import {takeUntil} from 'rxjs/operators';
 
 
 @Component({
@@ -10,14 +20,21 @@ import {TetrominoInterface} from "../entity/tetromino.interface";
   templateUrl: './game.component.html',
   styleUrls: ['./game.component.scss']
 })
-export class GameComponent implements OnInit, AfterViewInit {
+export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('canvasBoard') public canvas: ElementRef;
+  private draw$: EventEmitter<null> = new EventEmitter();
+  private destroy$ = new Subject();
 
-  private WIDTH = 10;
-  private HEIGHT = 15;
-  private BLOCK = 50;
-  private SLEEP = 100;
+  private readonly WIDTH = 10;
+  private readonly HEIGHT = 15;
+  private readonly BLOCK = 50;
+  private readonly SLEEP = 100;
+  private readonly DIRECTION = {
+    RIGHT: -1,
+    DOWN: -1,
+    LEFT: 1
+  };
 
   private ctx: CanvasRenderingContext2D;
   private matrix: number[][];
@@ -37,11 +54,17 @@ export class GameComponent implements OnInit, AfterViewInit {
       () => new Array(this.WIDTH).fill(0));
 
     this.isGameOver = false;
+    this.draw$.pipe(takeUntil(this.destroy$)).subscribe(() => this.drawBoard());
 
     // TODO initialize
     this.matrix[0][0] = 2;
     this.matrix[12][5] = 4;
     this.matrix[this.HEIGHT - 1][this.WIDTH - 1] = 7;
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   public ngAfterViewInit(): void {
@@ -58,38 +81,39 @@ export class GameComponent implements OnInit, AfterViewInit {
 
   private render(): void {
     if (this.isRunning) {
-
       if (!this.fps || this.fps > this.SLEEP || this.fps === 0) {
         this.clear();
-        this.handleTetromino();
-        this.drawBoard();
+        this.handleTetrominoOLD();
+        this.draw$.emit();
         this.fps = 0;
 
         // console.table(this.matrix);
       }
       requestAnimationFrame(this.render.bind(this));
-
     }
     this.fps++;
   }
 
-  private handleTetromino(): void {
+  private handleTetrominoOLD(): void {
     if (!this.nextTetromino || this.tetrominoService.hasCollided(this.matrix, this.nextTetromino)) {
       this.nextTetromino = this.tetrominoService.generateTetromino();
     } else {
-      // reset tetromino in matrix
-      this.tetrominoService.refreshMatrix(this.matrix, this.nextTetromino, true);
+      this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, true);
 
-      // force tetromino down
       this.nextTetromino.y += 1;
     }
+    this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, false);
+  }
 
-    // set current tetromino to matrix
-    this.tetrominoService.refreshMatrix(this.matrix, this.nextTetromino, false);
+  // TODO refactor handling
+  private handleAction(direction: number): void {
+    switch(true) {
+
+    }
+
   }
 
   private drawBoard(): void {
-    // retrieve value from matrix and draw rectangle in mapped color
     this.matrix.forEach((row, y) => {
       row.forEach((value, x) => {
         this.ctx.fillStyle = this.tetrominoService.getColor(value);
@@ -113,10 +137,26 @@ export class GameComponent implements OnInit, AfterViewInit {
 
   @HostListener('window:keydown', ['$event'])
   private keyEvent(event: KeyboardEvent): void {
-    if (this.isRunning && event.key === 'ArrowUp') {
-      this.rotateService.rotate(this.nextTetromino, event);
-      this.tetrominoService.refreshMatrix(this.matrix, this.nextTetromino, false);
+    if (this.isRunning) {
+      this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, true);
+      switch (event.key) {
+        case 'ArrowUp':
+          this.rotateService.rotate(this.nextTetromino, 1);
+          break;
+        case 'ArrowDown':
+          this.handleTetrominoOLD();
+          break;
+        case 'ArrowRight':
+          this.nextTetromino.x += 1;
+          break;
+        case 'ArrowLeft':
+          this.nextTetromino.x += -1;
+          break;
+      }
+      this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, false);
+      this.draw$.emit();
     }
-
   }
+
+
 }
