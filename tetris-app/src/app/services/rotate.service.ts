@@ -10,37 +10,24 @@ export class RotateService {
   }
 
   rotate(nextTetromino: TetrominoInterface, event: KeyboardEvent): void {
-    console.log(event);
-    console.log(nextTetromino);
 
-    const testShape1 = [
-      [6, 0, 0, 0],
-      [6, 6, 6, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0]
-    ];
 
-    const testShape2 = [
-      [0, 6, 6, 0],
-      [0, 6, 0, 0],
-      [0, 6, 0, 0],
-      [0, 0, 0, 0]
-    ];
 
-    // i = 12 + y - (x * 4)
-    console.log(this.getRotateValue(1, nextTetromino.y, nextTetromino.x));
-    console.table(testShape2);
+    console.table(nextTetromino.shape);
 
-    //https://www.youtube.com/watch?v=8OK8_tHeCIA&t=387s
+    const flatShapeArray = Object.keys(nextTetromino.shape)
+      .reduce((arr, key) => (arr.concat(nextTetromino.shape[key])), []);
 
-    testShape1.forEach((row, y) => {
+    nextTetromino.shape.forEach((row, y) => {
       row.forEach((value, x) => {
-
-
-
+        const index = this.getRotateValue(1, y, x);
+        nextTetromino.shape[y][x] = flatShapeArray[index];
       });
     });
 
+    // nextTetromino.shape.forEach(r => r.reverse());
+
+    console.table(nextTetromino.shape);
 
   }
 

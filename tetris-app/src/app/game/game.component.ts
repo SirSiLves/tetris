@@ -3,6 +3,8 @@ import {RotateService} from "../services/rotate.service";
 import {TetrominoService} from "../services/tetromino.service";
 import {TetrominoInterface} from "../entity/tetromino.interface";
 
+
+
 @Component({
   selector: 'app-game',
   templateUrl: './game.component.html',
@@ -38,7 +40,7 @@ export class GameComponent implements OnInit, AfterViewInit {
 
     // TODO initialize
     this.matrix[0][0] = 2;
-    this.matrix[8][5] = 4;
+    this.matrix[12][5] = 4;
     this.matrix[this.HEIGHT - 1][this.WIDTH - 1] = 7;
   }
 

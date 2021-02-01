@@ -27,10 +27,10 @@ export class TetrominoService {
       type: 6,
       color: this.COLOR_TABLE[6],
       shape: [
-        [6, 0, 0, 0],
-        [6, 6, 6, 0],
         [0, 0, 0, 0],
-        [0, 0, 0, 0]
+        [0, 6, 6, 0],
+        [0, 6, 0, 0],
+        [0, 6, 0, 0]
       ]
     };
   }
@@ -52,19 +52,19 @@ export class TetrominoService {
   hasCollided(matrix: number[][], nextTetromino: TetrominoInterface): boolean {
     let isCollided = false;
 
-    this.refreshMatrix(matrix, nextTetromino, true);
-    nextTetromino.y += 1;
-
-    nextTetromino.shape.forEach((tRow, tY) => {
-      tRow.forEach((tValue, tX) => {
-        if (tValue !== 0 && matrix[nextTetromino.y + tY][nextTetromino.x + tX] !== 0) {
-          isCollided = true;
-        }
-      });
-    });
-
-    nextTetromino.y -= 1;
-    this.refreshMatrix(matrix, nextTetromino, false);
+    // this.refreshMatrix(matrix, nextTetromino, true);
+    // nextTetromino.y += 1;
+    //
+    // nextTetromino.shape.forEach((tRow, tY) => {
+    //   tRow.forEach((tValue, tX) => {
+    //     if (tValue !== 0 && matrix[nextTetromino.y + tY][nextTetromino.x + tX] !== 0) {
+    //       isCollided = false;
+    //     }
+    //   });
+    // });
+    //
+    // nextTetromino.y -= 1;
+    // this.refreshMatrix(matrix, nextTetromino, false);
 
     return isCollided;
   }
