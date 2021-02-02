@@ -30,11 +30,6 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly HEIGHT = 15;
   private readonly BLOCK = 50;
   private readonly SLEEP = 100;
-  private readonly DIRECTION = {
-    RIGHT: -1,
-    DOWN: -1,
-    LEFT: 1
-  };
 
   private ctx: CanvasRenderingContext2D;
   private matrix: number[][];
@@ -83,7 +78,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.isRunning) {
       if (!this.fps || this.fps > this.SLEEP || this.fps === 0) {
         this.clear();
-        this.handleTetrominoOLD();
+        this.handleTetromino();
         this.draw$.emit();
         this.fps = 0;
 
@@ -94,7 +89,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.fps++;
   }
 
-  private handleTetrominoOLD(): void {
+  private handleTetromino(): void {
     if (!this.nextTetromino || this.tetrominoService.hasCollided(this.matrix, this.nextTetromino)) {
       this.nextTetromino = this.tetrominoService.generateTetromino();
     } else {
@@ -105,13 +100,6 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, false);
   }
 
-  // TODO refactor handling
-  private handleAction(direction: number): void {
-    switch(true) {
-
-    }
-
-  }
 
   private drawBoard(): void {
     this.matrix.forEach((row, y) => {
@@ -137,14 +125,14 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @HostListener('window:keydown', ['$event'])
   private keyEvent(event: KeyboardEvent): void {
-    if (this.isRunning) {
+    if (this.isRunning && !this.tetrominoService.hasCollided(this.matrix, this.nextTetromino)) {
       this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, true);
       switch (event.key) {
         case 'ArrowUp':
           this.rotateService.rotate(this.nextTetromino, 1);
           break;
         case 'ArrowDown':
-          this.handleTetrominoOLD();
+          this.nextTetromino.y += 1;
           break;
         case 'ArrowRight':
           this.nextTetromino.x += 1;
