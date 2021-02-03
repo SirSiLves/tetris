@@ -8,7 +8,6 @@ import {
   OnInit,
   ViewChild
 } from '@angular/core';
-import {RotateService} from '../services/rotate.service';
 import {TetrominoService} from '../services/tetromino.service';
 import {TetrominoInterface} from '../entity/tetromino.interface';
 import {Subject} from 'rxjs';
@@ -39,7 +38,6 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private isGameOver: boolean;
 
   constructor(
-    private rotateService: RotateService,
     private tetrominoService: TetrominoService
   ) {
   }
@@ -50,11 +48,6 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.isGameOver = false;
     this.draw$.pipe(takeUntil(this.destroy$)).subscribe(() => this.drawBoard());
-
-    // TODO initialize
-    this.matrix[0][0] = 2;
-    this.matrix[12][5] = 4;
-    this.matrix[this.HEIGHT - 1][this.WIDTH - 1] = 7;
   }
 
   ngOnDestroy(): void {
@@ -79,7 +72,6 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       if (!this.fps || this.fps > this.SLEEP || this.fps === 0) {
         this.clear();
         this.handleTetromino();
-        this.draw$.emit();
         this.fps = 0;
 
         // console.table(this.matrix);
@@ -90,16 +82,12 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private handleTetromino(): void {
-    if (!this.nextTetromino || this.tetrominoService.hasCollided(this.matrix, this.nextTetromino)) {
+    if (!this.nextTetromino || !this.doAction('ArrowDown')) {
       this.nextTetromino = this.tetrominoService.generateTetromino();
-    } else {
-      this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, true);
-
-      this.nextTetromino.y += 1;
+      this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, false);
+      this.draw$.emit();
     }
-    this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, false);
   }
-
 
   private drawBoard(): void {
     this.matrix.forEach((row, y) => {
@@ -123,26 +111,40 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
   }
 
+  private doAction(action: string): boolean {
+    this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, true);
+
+    const origTetromino = {...this.nextTetromino};
+    const testTetromino = {...this.nextTetromino};
+
+    switch (action) {
+      case 'ArrowUp':
+        this.tetrominoService.rotate(this.matrix, testTetromino, 1);
+        break;
+      case 'ArrowDown':
+        testTetromino.y += 1;
+        break;
+      case 'ArrowRight':
+        testTetromino.x += 1;
+        break;
+      case 'ArrowLeft':
+        testTetromino.x += -1;
+        break;
+    }
+
+    const isExecuted = !this.tetrominoService.hasCollided(this.matrix, testTetromino);
+    this.nextTetromino = isExecuted ? testTetromino : origTetromino;
+
+    this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, false);
+    this.draw$.emit();
+
+    return isExecuted;
+  }
+
   @HostListener('window:keydown', ['$event'])
   private keyEvent(event: KeyboardEvent): void {
-    if (this.isRunning && !this.tetrominoService.hasCollided(this.matrix, this.nextTetromino)) {
-      this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, true);
-      switch (event.key) {
-        case 'ArrowUp':
-          this.rotateService.rotate(this.nextTetromino, 1);
-          break;
-        case 'ArrowDown':
-          this.nextTetromino.y += 1;
-          break;
-        case 'ArrowRight':
-          this.nextTetromino.x += 1;
-          break;
-        case 'ArrowLeft':
-          this.nextTetromino.x += -1;
-          break;
-      }
-      this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, false);
-      this.draw$.emit();
+    if (this.isRunning) {
+      this.doAction(event.key);
     }
   }
 

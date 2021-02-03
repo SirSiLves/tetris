@@ -20,6 +20,21 @@ export class TetrominoService {
   constructor() {
   }
 
+  private static getRotateIndex(r: number, py: number, px: number): number {
+    switch (r % 4) {
+      case 0:
+        return py * 4 + px;           //  0  degrees
+      case 1:
+        return 12 + py - (px * 4);    // 90  degrees
+      case 2:
+        return 15 - (py * 4) - px;    // 180 degrees
+      case 3:
+        return 3 - py + (px * 4);     // 270 degrees
+      default:
+        return 0;
+    }
+  }
+
   generateTetromino(): TetrominoInterface {
     return {
       x: 3,
@@ -43,31 +58,47 @@ export class TetrominoService {
     nextTetromino.shape.forEach((tRow, tY) => {
       tRow.forEach((tValue, tX) => {
         if (tValue !== 0) {
-          matrix[nextTetromino.y + tY][nextTetromino.x + tX] = remove ? 0 : nextTetromino.type;
+          try {
+            matrix[nextTetromino.y + tY][nextTetromino.x + tX] = remove ? 0 : nextTetromino.type;
+          } catch (e) {
+          }
         }
       });
     });
   }
 
   hasCollided(matrix: number[][], nextTetromino: TetrominoInterface): boolean {
-    let isCollided = false;
+    let collided = false;
 
-    // this.refreshMatrix(matrix, nextTetromino, true);
-    // nextTetromino.y += 1;
-    //
-    // nextTetromino.shape.forEach((tRow, tY) => {
-    //   tRow.forEach((tValue, tX) => {
-    //     if (tValue !== 0 && matrix[nextTetromino.y + tY][nextTetromino.x + tX] !== 0) {
-    //       isCollided = false;
-    //     }
-    //   });
-    // });
-    //
-    // nextTetromino.y -= 1;
-    // this.refreshMatrix(matrix, nextTetromino, false);
+    nextTetromino.shape.forEach((tRow, tY) => {
+      tRow.forEach((tValue, tX) => {
+        try {
+          if (tValue !== 0 && matrix[nextTetromino.y + tY][nextTetromino.x + tX] !== 0) {
+            collided = true;
+          }
+        } catch (e) {
+          collided = true;
+        }
+      });
+    });
 
-    return isCollided;
+    return collided;
   }
 
+  rotate(matrix: number[][], nextTetromino: TetrominoInterface, rotate: number): void {
+    const flatShapeArray = Object.keys(nextTetromino.shape)
+      .reduce((arr, key) => (arr.concat(nextTetromino.shape[key])), []);
+
+    nextTetromino.shape.forEach((row, y) => {
+      row.forEach((value, x) => {
+        const index = TetrominoService.getRotateIndex(rotate, y, x);
+        nextTetromino.shape[y][x] = flatShapeArray[index];
+
+        if (this.hasCollided(matrix, nextTetromino)) {
+          nextTetromino.x += nextTetromino.x < 0 ? 1 : -1;
+        }
+      });
+    });
+  }
 
 }
