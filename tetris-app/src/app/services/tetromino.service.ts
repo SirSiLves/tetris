@@ -6,7 +6,7 @@ import {TetrominoInterface} from '../entity/tetromino.interface';
 })
 export class TetrominoService {
 
-  private COLOR_TABLE = {
+  private readonly COLOR_TABLE = {
     0: '#FFFFFF',
     1: '#32CD32',
     2: '#FF0000',
@@ -14,8 +14,75 @@ export class TetrominoService {
     4: '#FF00FF',
     5: '#2F4F4F',
     6: '#00008B',
-    7: '#FFA500'
+    7: '#FFA500',
+    8: '#32FF00', // Scorer color
+    9: '#F7FF00'  // Scorer color
   };
+  private readonly TETROMINO_SHAPE: TetrominoInterface[] = [
+    {
+      x: 3, y: 0, type: 1, color: this.COLOR_TABLE[1],
+      shape: [
+        [0, 1, 0, 0],
+        [0, 1, 0, 0],
+        [0, 1, 0, 0],
+        [0, 1, 0, 0]
+      ]
+    },
+    {
+      x: 3, y: 0, type: 2, color: this.COLOR_TABLE[2],
+      shape: [
+        [0, 2, 2, 0],
+        [0, 2, 0, 0],
+        [0, 2, 0, 0],
+        [0, 0, 0, 0]
+      ]
+    },
+    {
+      x: 3, y: -1, type: 3, color: this.COLOR_TABLE[3],
+      shape: [
+        [0, 0, 0, 0],
+        [0, 3, 3, 0],
+        [0, 3, 3, 0],
+        [0, 0, 0, 0]
+      ]
+    },
+    {
+      x: 3, y: 0, type: 4, color: this.COLOR_TABLE[4],
+      shape: [
+        [0, 4, 0, 0],
+        [0, 4, 4, 0],
+        [0, 0, 4, 0],
+        [0, 0, 0, 0]
+      ]
+    },
+    {
+      x: 3, y: 0, type: 5, color: this.COLOR_TABLE[5],
+      shape: [
+        [0, 5, 0, 0],
+        [0, 5, 5, 0],
+        [0, 5, 0, 0],
+        [0, 0, 0, 0]
+      ]
+    },
+    {
+      x: 3, y: 0, type: 6, color: this.COLOR_TABLE[6],
+      shape: [
+        [0, 0, 6, 0],
+        [0, 6, 6, 0],
+        [0, 6, 0, 0],
+        [0, 0, 0, 0]
+      ]
+    },
+    {
+      x: 3, y: 0, type: 7, color: this.COLOR_TABLE[7],
+      shape: [
+        [0, 7, 7, 0],
+        [0, 0, 7, 0],
+        [0, 0, 7, 0],
+        [0, 0, 0, 0]
+      ]
+    },
+  ];
 
   constructor() {
   }
@@ -36,18 +103,8 @@ export class TetrominoService {
   }
 
   generateTetromino(): TetrominoInterface {
-    return {
-      x: 3,
-      y: 0,
-      type: 6,
-      color: this.COLOR_TABLE[6],
-      shape: [
-        [0, 6, 6, 0],
-        [0, 6, 0, 0],
-        [0, 6, 0, 0],
-        [0, 0, 0, 0]
-      ]
-    };
+    const rndNmb = Math.floor(Math.random() * Math.floor(7));
+    return JSON.parse(JSON.stringify(this.TETROMINO_SHAPE[rndNmb]));
   }
 
   getColor(x: number): string {

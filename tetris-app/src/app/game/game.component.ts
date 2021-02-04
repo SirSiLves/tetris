@@ -28,12 +28,14 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly WIDTH = 10;
   private readonly HEIGHT = 15;
   private readonly BLOCK = 50;
-  private readonly SLEEP = 100;
 
+  score = 0;
+  private sleep = 100;
+  private fps = 0;
   private ctx: CanvasRenderingContext2D;
   private matrix: number[][];
   private isRunning: boolean;
-  private fps: number;
+  private gameOver: boolean;
   private nextTetromino: TetrominoInterface;
   private isGameOver: boolean;
 
@@ -69,12 +71,14 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private render(): void {
     if (this.isRunning) {
-      if (!this.fps || this.fps > this.SLEEP || this.fps === 0) {
+      if (this.fps > this.sleep || this.fps === 0) {
         this.clear();
         this.handleTetromino();
+        this.updateScore();
         this.fps = 0;
 
         // console.table(this.matrix);
+        console.log('Sleep: ' + this.sleep + ', Score: ' + this.score);
       }
       requestAnimationFrame(this.render.bind(this));
     }
@@ -86,6 +90,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.nextTetromino = this.tetrominoService.generateTetromino();
       this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, false);
       this.draw$.emit();
+      this.sleep -= this.sleep > 0 ? 1 : 0;
     }
   }
 
@@ -96,6 +101,51 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         this.ctx.fillRect(x * this.BLOCK, y * this.BLOCK, this.BLOCK, this.BLOCK);
       });
     });
+  }
+
+  private updateScore(): void {
+    this.score += 1;
+
+    let scoreCount = 0;
+    const tempMatrix = JSON.parse(JSON.stringify(this.matrix));
+
+    // count filled line and remove it from matrix
+    this.matrix.forEach((row, y) => {
+      const tempFiltered = row.filter(v => v > 0 && v < 8);
+      if (tempFiltered.length === 10) {
+        tempMatrix.splice(y, 1);
+        scoreCount += 1;
+      }
+    });
+
+    if (scoreCount > 0) {
+      // add new 0-arrays which are removed from scoring
+      const newArray = [...Array(scoreCount)].map(x => Array(10).fill(0));
+      newArray.forEach(r => (tempMatrix.unshift(r)));
+
+      this.score += Math.pow(5, scoreCount);
+      this.matrix = tempMatrix;
+      this.nextTetromino = null;
+      this.draw$.emit();
+    }
+
+
+    // TODO markup scoring lines
+    // // markup scorer lines
+    // this.matrix.forEach((row, y) => {
+    //   const filteredRow = row.filter(v => v > 0);
+    //   if (filteredRow.length === 10) {
+    //     row.forEach((v, x) => {
+    //       if (v !== 8 && v !== 9) {
+    //         this.matrix[y][x] = 8;
+    //       } else if (v === 8) {
+    //         this.matrix[y][x] = 9;
+    //       } else {
+    //         this.matrix[y][x] = 0;
+    //       }
+    //     });
+    //   }
+    // });
   }
 
   go(): void {
@@ -143,10 +193,9 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @HostListener('window:keydown', ['$event'])
   private keyEvent(event: KeyboardEvent): void {
-    if (this.isRunning) {
+    if (this.isRunning && this.nextTetromino) {
       this.doAction(event.key);
     }
   }
-
 
 }
