@@ -104,24 +104,29 @@ export class TetrominoService {
 
   generateTetromino(): TetrominoInterface {
     const rndNmb = Math.floor(Math.random() * Math.floor(7));
-    return JSON.parse(JSON.stringify(this.TETROMINO_SHAPE[rndNmb]));
+    return JSON.parse(JSON.stringify(this.TETROMINO_SHAPE[2]));
   }
 
   getColor(x: number): string {
     return this.COLOR_TABLE[x];
   }
 
-  updateMatrix(matrix: number[][], nextTetromino: TetrominoInterface, remove: boolean): void {
-    nextTetromino.shape.forEach((tRow, tY) => {
+  updateMatrix(matrix: number[][], nextTetromino: TetrominoInterface, remove: boolean): number[][] {
+    const tempMatrix = JSON.parse(JSON.stringify(matrix));
+    const tempTetromino = JSON.parse(JSON.stringify(nextTetromino));
+
+    tempTetromino.shape.forEach((tRow, tY) => {
       tRow.forEach((tValue, tX) => {
         if (tValue !== 0) {
           try {
-            matrix[nextTetromino.y + tY][nextTetromino.x + tX] = remove ? 0 : nextTetromino.type;
+            tempMatrix[nextTetromino.y + tY][nextTetromino.x + tX] = remove ? 0 : nextTetromino.type;
           } catch (e) {
           }
         }
       });
     });
+
+    return tempMatrix;
   }
 
   hasCollided(matrix: number[][], nextTetromino: TetrominoInterface): boolean {
@@ -152,6 +157,7 @@ export class TetrominoService {
         nextTetromino.shape[y][x] = flatShapeArray[index];
 
         if (this.hasCollided(matrix, nextTetromino)) {
+          console.log(nextTetromino.x);
           nextTetromino.x += nextTetromino.x < 0 ? 1 : -1;
         }
       });

@@ -30,14 +30,21 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly BLOCK = 50;
 
   score = 0;
+  gameOver = false;
   private sleep = 100;
   private fps = 0;
   private ctx: CanvasRenderingContext2D;
   private matrix: number[][];
   private isRunning: boolean;
-  private gameOver: boolean;
   private nextTetromino: TetrominoInterface;
-  private isGameOver: boolean;
+
+  private static sleeper(ms): void {
+    const start = new Date().getTime();
+    let end = start;
+    while (end < start + ms) {
+      end = new Date().getTime();
+    }
+  }
 
   constructor(
     private tetrominoService: TetrominoService
@@ -48,7 +55,6 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.matrix = Array.from({length: this.HEIGHT},
       () => new Array(this.WIDTH).fill(0));
 
-    this.isGameOver = false;
     this.draw$.pipe(takeUntil(this.destroy$)).subscribe(() => this.drawBoard());
   }
 
@@ -72,25 +78,22 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private render(): void {
     if (this.isRunning) {
       if (this.fps > this.sleep || this.fps === 0) {
-        this.clear();
         this.handleTetromino();
-        this.updateScore();
         this.fps = 0;
-
-        // console.table(this.matrix);
-        console.log('Sleep: ' + this.sleep + ', Score: ' + this.score);
       }
       requestAnimationFrame(this.render.bind(this));
+      this.draw$.emit();
     }
     this.fps++;
   }
 
   private handleTetromino(): void {
-    if (!this.nextTetromino || !this.doAction('ArrowDown')) {
+    if (!this.nextTetromino) {
       this.nextTetromino = this.tetrominoService.generateTetromino();
-      this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, false);
-      this.draw$.emit();
+      this.matrix = this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, false);
       this.sleep -= this.sleep > 0 ? 1 : 0;
+    } else {
+      this.doAction('ArrowDown');
     }
   }
 
@@ -103,49 +106,34 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  private updateScore(): void {
-    this.score += 1;
-
+  private validateScore(): void {
     let scoreCount = 0;
-    const tempMatrix = JSON.parse(JSON.stringify(this.matrix));
+    const copyMatrix: number[][] = JSON.parse(JSON.stringify(this.matrix));
 
-    // count filled line and remove it from matrix
     this.matrix.forEach((row, y) => {
       const tempFiltered = row.filter(v => v > 0 && v < 8);
       if (tempFiltered.length === 10) {
-        tempMatrix.splice(y, 1);
+        copyMatrix[y].forEach((value, x) => copyMatrix[y][x] = 8);
         scoreCount += 1;
+      }
+    });
+    this.draw$.emit();
+
+    // count filled line and replace it from matrix with an empty array
+    copyMatrix.forEach((row, y) => {
+      const tempFiltered = row.filter(v => v === 8);
+      if (tempFiltered.length === 10) {
+        copyMatrix.splice(y, 1);
+        const newArray = Array(10).fill(0);
+        copyMatrix.unshift(newArray);
+        // scoreCount += 1;
       }
     });
 
     if (scoreCount > 0) {
-      // add new 0-arrays which are removed from scoring
-      const newArray = [...Array(scoreCount)].map(x => Array(10).fill(0));
-      newArray.forEach(r => (tempMatrix.unshift(r)));
-
       this.score += Math.pow(5, scoreCount);
-      this.matrix = tempMatrix;
-      this.nextTetromino = null;
-      this.draw$.emit();
+      this.matrix = copyMatrix;
     }
-
-
-    // TODO markup scoring lines
-    // // markup scorer lines
-    // this.matrix.forEach((row, y) => {
-    //   const filteredRow = row.filter(v => v > 0);
-    //   if (filteredRow.length === 10) {
-    //     row.forEach((v, x) => {
-    //       if (v !== 8 && v !== 9) {
-    //         this.matrix[y][x] = 8;
-    //       } else if (v === 8) {
-    //         this.matrix[y][x] = 9;
-    //       } else {
-    //         this.matrix[y][x] = 0;
-    //       }
-    //     });
-    //   }
-    // });
   }
 
   go(): void {
@@ -161,34 +149,37 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
   }
 
-  private doAction(action: string): boolean {
-    this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, true);
+  private doAction(action: string): void {
+    const copyTetremino = JSON.parse(JSON.stringify(this.nextTetromino));
+    let copyMatrix = JSON.parse(JSON.stringify(this.matrix));
 
-    const origTetromino = {...this.nextTetromino};
-    const testTetromino = {...this.nextTetromino};
+    copyMatrix = this.tetrominoService.updateMatrix(copyMatrix, copyTetremino, true);
 
     switch (action) {
       case 'ArrowUp':
-        this.tetrominoService.rotate(this.matrix, testTetromino, 1);
+        this.tetrominoService.rotate(copyMatrix, copyTetremino, 1);
         break;
       case 'ArrowDown':
-        testTetromino.y += 1;
+        copyTetremino.y += 1;
         break;
       case 'ArrowRight':
-        testTetromino.x += 1;
+        copyTetremino.x += 1;
         break;
       case 'ArrowLeft':
-        testTetromino.x += -1;
+        copyTetremino.x += -1;
         break;
     }
 
-    const isExecuted = !this.tetrominoService.hasCollided(this.matrix, testTetromino);
-    this.nextTetromino = isExecuted ? testTetromino : origTetromino;
-
-    this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, false);
-    this.draw$.emit();
-
-    return isExecuted;
+    if (!this.tetrominoService.hasCollided(copyMatrix, copyTetremino)) {
+      this.nextTetromino = copyTetremino;
+      this.matrix = this.tetrominoService.updateMatrix(copyMatrix, copyTetremino, false);
+      this.score += action === 'ArrowDown' ? 1 : 0;
+    } else {
+      if (action === 'ArrowDown') {
+        this.validateScore();
+        this.nextTetromino = null;
+      }
+    }
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -197,5 +188,16 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.doAction(event.key);
     }
   }
+
+  private async markupScore(y: number): Promise<void> {
+    // TODO
+    this.matrix[y].forEach((v, x) => {
+      this.matrix[y][x] = 8;
+    });
+    this.draw$.emit();
+
+    await new Promise(resolve => setTimeout(resolve, 3000));
+  }
+
 
 }
