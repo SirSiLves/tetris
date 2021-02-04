@@ -8,15 +8,14 @@ export class TetrominoService {
 
   private readonly COLOR_TABLE = {
     0: '#FFFFFF',
-    1: '#32CD32',
-    2: '#FF0000',
-    3: '#008B8B',
-    4: '#FF00FF',
-    5: '#2F4F4F',
-    6: '#00008B',
-    7: '#FFA500',
-    8: '#32FF00', // Scorer color
-    9: '#F7FF00'  // Scorer color
+    1: '#DAF7A6',
+    2: '#FFC300',
+    3: '#FF5733',
+    4: '#C70039',
+    5: '#900C3F',
+    6: '#581845',
+    7: '#562200',
+    8: '#08FF00', // Scorer color
   };
   private readonly TETROMINO_SHAPE: TetrominoInterface[] = [
     {
@@ -104,7 +103,7 @@ export class TetrominoService {
 
   generateTetromino(): TetrominoInterface {
     const rndNmb = Math.floor(Math.random() * Math.floor(7));
-    return JSON.parse(JSON.stringify(this.TETROMINO_SHAPE[2]));
+    return JSON.parse(JSON.stringify(this.TETROMINO_SHAPE[rndNmb]));
   }
 
   getColor(x: number): string {
