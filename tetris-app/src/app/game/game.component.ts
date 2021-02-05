@@ -26,17 +26,19 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private destroy$ = new Subject();
 
   private readonly WIDTH = 10;
-  private readonly HEIGHT = 15;
-  private readonly BLOCK = 50;
+  private readonly HEIGHT = 18;
+  private readonly BLOCK = 40;
 
-  score = 0;
-  gameOver = false;
-  private sleep = 100;
-  private fps = 0;
+  score: number;
+  gameOver: boolean;
+  difficulty: number;
+  private sleep: number;
+  private fps: number;
   private ctx: CanvasRenderingContext2D;
   private matrix: number[][];
   private isRunning: boolean;
   private nextTetromino: TetrominoInterface;
+  private requestAnimationId: number;
 
   constructor(
     private tetrominoService: TetrominoService
@@ -44,9 +46,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.matrix = Array.from({length: this.HEIGHT},
-      () => new Array(this.WIDTH).fill(0));
-
+    this.reset();
     this.draw$.pipe(takeUntil(this.destroy$)).subscribe(() => this.drawBoard());
   }
 
@@ -73,29 +73,34 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         this.handleTetromino();
         this.fps = 0;
       }
-      requestAnimationFrame(this.render.bind(this));
+      this.requestAnimationId = requestAnimationFrame(this.render.bind(this));
       this.draw$.emit();
+      this.fps++;
     }
-    this.fps++;
   }
 
   private handleTetromino(): void {
     if (!this.nextTetromino) {
       this.nextTetromino = this.tetrominoService.generateTetromino();
+      const oldMatrix = JSON.parse(JSON.stringify(this.matrix));
       this.matrix = this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, false);
-      this.sleep -= this.sleep > 0 ? 5 : 0;
+      this.validateGameOver(oldMatrix);
     } else {
       this.doAction('ArrowDown');
     }
   }
 
   private drawBoard(): void {
-    this.matrix.forEach((row, y) => {
+    const copyMatrix: number[][] = JSON.parse(JSON.stringify(this.matrix));
+
+    copyMatrix.forEach((row, y) => {
       row.forEach((value, x) => {
         this.ctx.fillStyle = this.tetrominoService.getColor(value);
         this.ctx.fillRect(x * this.BLOCK, y * this.BLOCK, this.BLOCK, this.BLOCK);
       });
     });
+
+    this.matrix = copyMatrix;
   }
 
   private sliceMatrix(): void {
@@ -115,7 +120,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.nextTetromino = null;
   }
 
-  go(): void {
+  restart(): void {
+    this.reset();
     this.isRunning = true;
     this.render();
   }
@@ -155,7 +161,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.score += action === 'ArrowDown' ? 1 : 0;
     } else {
       if (action === 'ArrowDown') {
-        this.markupScore().then(() => {
+        this.validateScore().then(() => {
           this.sliceMatrix();
         });
       }
@@ -169,7 +175,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private async markupScore(): Promise<void> {
+  private async validateScore(): Promise<void> {
     let scoreCount = 0;
     const copyMatrix: number[][] = JSON.parse(JSON.stringify(this.matrix));
 
@@ -184,11 +190,39 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.draw$.emit();
 
     if (scoreCount > 0) {
+      this.sleep -= this.sleep > 0 ? 5 : 0;
       this.score += Math.pow(5, scoreCount);
       this.matrix = copyMatrix;
       await new Promise(resolve => setTimeout(resolve, 200));
     }
   }
 
+  private reset(): void {
+    if (this.requestAnimationId) {
+      cancelAnimationFrame(this.requestAnimationId);
+    }
+    this.sleep = 100;
+    this.fps = 0;
+    this.score = 0;
+    this.nextTetromino = null;
+    this.gameOver = false;
+    this.matrix = Array.from({length: this.HEIGHT},
+      () => new Array(this.WIDTH).fill(0));
+  }
 
+  private validateGameOver(oldMatrix: number[][]): void {
+    const copyTetromino: TetrominoInterface = JSON.parse(JSON.stringify(this.nextTetromino));
+    copyTetromino.type = 9;
+
+    const copyMatrix = this.tetrominoService.updateMatrix(oldMatrix, copyTetromino, false);
+
+    oldMatrix.forEach((row, y) => {
+      row.forEach((v, x) => {
+        if (v !== 0 && copyMatrix[y][x] !== 0 && v !== copyMatrix[y][x]) {
+          this.gameOver = true;
+          this.isRunning = false;
+        }
+      });
+    });
+  }
 }

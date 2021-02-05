@@ -8,7 +8,7 @@ export class TetrominoService {
 
   private readonly COLOR_TABLE = {
     0: '#FFFFFF',
-    1: '#DAF7A6',
+    1: '#BAED5D',
     2: '#FFC300',
     3: '#FF5733',
     4: '#C70039',
