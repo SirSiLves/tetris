@@ -1,0 +1,29 @@
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.container {
+  min-height: 100%;
+  position: relative;
+  background-color: white;
+}
+
+header {
+  background-color: deeppink;
+}
+
+main {
+  display: flex;
+  justify-content: center;
+  padding: 10px 10px 100px;
+}
+
+footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 60px;
+  background-color: greenyellow;
+}

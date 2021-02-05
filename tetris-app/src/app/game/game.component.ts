@@ -3,7 +3,7 @@ import {
   Component,
   ElementRef,
   EventEmitter,
-  HostListener,
+  HostListener, Input,
   OnDestroy,
   OnInit,
   ViewChild
@@ -22,6 +22,8 @@ import {takeUntil} from 'rxjs/operators';
 export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('canvasBoard') public canvas: ElementRef;
+  @Input() startEvent$: EventEmitter<void>;
+  @Input() pauseEvent$: EventEmitter<void>;
   private draw$: EventEmitter<null> = new EventEmitter();
   private destroy$ = new Subject();
 
@@ -48,6 +50,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     this.reset();
     this.draw$.pipe(takeUntil(this.destroy$)).subscribe(() => this.drawBoard());
+    this.startEvent$.pipe(takeUntil(this.destroy$)).subscribe(() => this.restart());
+    this.pauseEvent$.pipe(takeUntil(this.destroy$)).subscribe(() => this.stop());
   }
 
   ngOnDestroy(): void {
@@ -84,6 +88,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.nextTetromino = this.tetrominoService.generateTetromino();
       const oldMatrix = JSON.parse(JSON.stringify(this.matrix));
       this.matrix = this.tetrominoService.updateMatrix(this.matrix, this.nextTetromino, false);
+      // TODO validate game over without an input
       this.validateGameOver(oldMatrix);
     } else {
       this.doAction('ArrowDown');

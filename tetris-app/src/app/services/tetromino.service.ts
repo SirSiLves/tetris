@@ -156,7 +156,6 @@ export class TetrominoService {
         nextTetromino.shape[y][x] = flatShapeArray[index];
 
         if (this.hasCollided(matrix, nextTetromino)) {
-          console.log(nextTetromino.x);
           nextTetromino.x += nextTetromino.x < 0 ? 1 : -1;
         }
       });

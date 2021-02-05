@@ -1,1 +1,18 @@
-<app-game></app-game>
+<div class="container">
+  <header>
+    <app-header
+      (startEvent$)="raiseStartEvent()"
+      (pauseEvent$)="raisePauseEvent()">
+    </app-header>
+  </header>
+  <main>
+    <app-game
+      [startEvent$]="startEvent$"
+      [pauseEvent$]="pauseEvent$"
+    >
+    </app-game>
+  </main>
+  <footer>
+    <app-footer></app-footer>
+  </footer>
+</div>
