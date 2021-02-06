@@ -12,6 +12,9 @@ import {TetrominoService} from '../services/tetromino.service';
 import {TetrominoInterface} from '../entity/tetromino.interface';
 import {Subject} from 'rxjs';
 import {takeUntil} from 'rxjs/operators';
+import {StateService} from '../services/state.service';
+import {MatDialog} from '@angular/material/dialog';
+import {GameOverDialogComponent} from './game-over-dialog/game-over-dialog.component';
 
 
 @Component({
@@ -22,8 +25,6 @@ import {takeUntil} from 'rxjs/operators';
 export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('canvasBoard') public canvas: ElementRef;
-  @Input() startEvent$: EventEmitter<void>;
-  @Input() pauseEvent$: EventEmitter<void>;
   private draw$: EventEmitter<null> = new EventEmitter();
   private destroy$ = new Subject();
 
@@ -32,6 +33,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly BLOCK = 40;
 
   score: number;
+  clearedLines: number;
   gameOver: boolean;
   difficulty: number;
   private sleep: number;
@@ -43,15 +45,22 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private requestAnimationId: number;
 
   constructor(
-    private tetrominoService: TetrominoService
+    private tetrominoService: TetrominoService,
+    private stateService: StateService,
+    private dialog: MatDialog
   ) {
   }
 
   ngOnInit(): void {
     this.reset();
     this.draw$.pipe(takeUntil(this.destroy$)).subscribe(() => this.drawBoard());
-    this.startEvent$.pipe(takeUntil(this.destroy$)).subscribe(() => this.restart());
-    this.pauseEvent$.pipe(takeUntil(this.destroy$)).subscribe(() => this.stop());
+
+    this.stateService.startEvent.pipe(takeUntil(this.destroy$)).subscribe(() => this.start());
+    this.stateService.pauseEvent.pipe(takeUntil(this.destroy$)).subscribe(() => this.stop());
+    this.stateService.resetEvent.pipe(takeUntil(this.destroy$)).subscribe(() => this.restart());
+
+    // TODO TEMP
+    this.openDialog();
   }
 
   ngOnDestroy(): void {
@@ -125,10 +134,14 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.nextTetromino = null;
   }
 
-  restart(): void {
-    this.reset();
+  start(): void {
     this.isRunning = true;
     this.render();
+  }
+
+  restart(): void {
+    this.reset();
+    this.start();
   }
 
   stop(): void {
@@ -196,6 +209,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (scoreCount > 0) {
       this.sleep -= this.sleep > 0 ? 5 : 0;
+      this.clearedLines += scoreCount;
       this.score += Math.pow(5, scoreCount);
       this.matrix = copyMatrix;
       await new Promise(resolve => setTimeout(resolve, 200));
@@ -209,8 +223,9 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.sleep = 100;
     this.fps = 0;
     this.score = 0;
+    this.clearedLines = 0;
     this.nextTetromino = null;
-    this.gameOver = false;
+    this.gameOver = true;
     this.matrix = Array.from({length: this.HEIGHT},
       () => new Array(this.WIDTH).fill(0));
   }
@@ -228,6 +243,22 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
           this.isRunning = false;
         }
       });
+    });
+
+    if (this.gameOver) {
+      this.openDialog();
+    }
+  }
+
+  openDialog(): void {
+    const dialogRef = this.dialog.open(GameOverDialogComponent, {
+      width: '350px', height: '200px'
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((action) => {
+      if (action) {
+        this.restart();
+      }
     });
   }
 }

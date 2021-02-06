@@ -1,4 +1,5 @@
-import {Component, EventEmitter, OnInit, Output} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
+import {StateService} from '../services/state.service';
 
 @Component({
   selector: 'app-header',
@@ -7,19 +8,36 @@ import {Component, EventEmitter, OnInit, Output} from '@angular/core';
 })
 export class HeaderComponent implements OnInit {
 
-  @Output() startEvent$ = new EventEmitter<void>();
-  @Output() pauseEvent$ = new EventEmitter<void>();
+  isRunning = false;
+  isPaused = true;
+  newGame = true;
 
-  constructor() { }
+  constructor(
+    private stateService: StateService
+  ) {
+  }
 
   ngOnInit(): void {
+
   }
 
   raiseStartEvent(): void {
-    this.startEvent$.emit();
+    this.stateService.raiseStartEvent();
+    this.isRunning = true;
+    this.isPaused = false;
+    this.newGame = false;
   }
 
   raisePauseEvent(): void {
-    this.pauseEvent$.emit();
+    this.stateService.raisePauseEvent();
+    this.isRunning = false;
+    this.isPaused = true;
   }
+
+  raiseRestartEvent(): void {
+    this.stateService.raiseResetEvent();
+    this.isPaused = false;
+    this.isRunning = true;
+  }
+
 }

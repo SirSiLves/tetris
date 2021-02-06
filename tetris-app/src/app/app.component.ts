@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Output} from '@angular/core';
+import {Component} from '@angular/core';
 
 @Component({
   selector: 'app-root',
@@ -7,15 +7,4 @@ import {Component, EventEmitter, Output} from '@angular/core';
 })
 export class AppComponent {
   title = 'tetris-app';
-
-  @Output() startEvent$ = new EventEmitter<void>();
-  @Output() pauseEvent$ = new EventEmitter<void>();
-
-  raiseStartEvent(): void {
-    this.startEvent$.emit();
-  }
-
-  raisePauseEvent(): void {
-    this.pauseEvent$.emit();
-  }
 }

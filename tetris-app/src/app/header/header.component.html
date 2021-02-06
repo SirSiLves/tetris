@@ -1,11 +1,15 @@
 <div>
-  <div class="button">
-    <button mat-raised-button (click)="raiseStartEvent()">START</button>
+  <div class="button" *ngIf="!isRunning">
+    <button mat-raised-button (click)="raiseStartEvent()" [disabled]="isRunning">START</button>
+  </div>
+  <div class="button" *ngIf="isRunning">
+    <button mat-raised-button (click)="raisePauseEvent()" [disabled]="isPaused">PAUSE</button>
   </div>
   <div class="text">
     <h1>Let's play TETRIS</h1>
   </div>
   <div class="button">
-    <button mat-raised-button (click)="raisePauseEvent()">PAUSE</button>
+    <button mat-raised-button (click)="raiseRestartEvent()" [disabled]="newGame">RESTART</button>
   </div>
 </div>
+

@@ -1,12 +1,10 @@
 
-<h1 *ngIf="gameOver">GAME OVER</h1>
-
-<div>
-  <button (click)="restart()">RESTART</button>
-  <button (click)="stop()">STOP</button>
-  <button (click)="clear()">CLEAR</button>
+<div class="score">
   <div>
     SCORE: {{this.score}}
+  </div>
+  <div>
+    CLEARED LINES: {{this.clearedLines}}
   </div>
 </div>
 

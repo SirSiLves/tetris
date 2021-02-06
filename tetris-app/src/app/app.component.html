@@ -1,15 +1,10 @@
 <div class="container">
   <header>
-    <app-header
-      (startEvent$)="raiseStartEvent()"
-      (pauseEvent$)="raisePauseEvent()">
+    <app-header>
     </app-header>
   </header>
   <main>
-    <app-game
-      [startEvent$]="startEvent$"
-      [pauseEvent$]="pauseEvent$"
-    >
+    <app-game>
     </app-game>
   </main>
   <footer>

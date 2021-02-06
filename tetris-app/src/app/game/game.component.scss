@@ -2,3 +2,15 @@
 canvas {
   border: 5px solid;
 }
+
+.score {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.gameOver {
+  position: absolute;
+  overflow: initial;
+
+}
