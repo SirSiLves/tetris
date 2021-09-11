@@ -53,4 +53,4 @@ jobs:
           app-name: 'Tetris-Web'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_976F48C2BFFF43449E7032EE3651172C }}
-          package: ./dist/tetris-app
+          package: .
